@@ -5,6 +5,7 @@ import {
 import { geocodificar, ativarAutocomplete } from "./geocode.js";
 import { montarCircuito, calcularTrecho, googleMapsUrl } from "./rotas.js";
 import { calcularMetricas, analisarParidade } from "./metricas.js";
+import { resumoMes } from "./feriados.js";
 
 const $ = (s) => document.querySelector(s);
 const brl = (v) => (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -342,8 +343,37 @@ function renderMetricas() {
   } else {
     $("#custoCircuito").textContent = "";
   }
+  renderCustoMensal(m);
   renderGrafico(m);
   renderHistorico();
+}
+
+function renderCustoMensal(m) {
+  const box = $("#custoMensal");
+  const c = estado.circuito;
+  const r = resumoMes(new Date());
+  const kmDia = c ? (c.tIda.distanciaTotalKm + c.tVolta.distanciaTotalKm) : 0;
+
+  if (!kmDia || !m.custoPorKm) {
+    box.innerHTML = `<p class="muted">Mês ${r.nome} (atual): <b>${r.diasUteis} dias úteis</b>. ` +
+      `Cadastre destinos ativos e ao menos dois abastecimentos para estimar o custo.</p>`;
+    return;
+  }
+
+  const custoDia = kmDia * m.custoPorKm;      // ida + volta em 1 dia
+  const custoMes = custoDia * r.diasUteis;
+  const estimado = !c.tIda.real || !c.tVolta.real;
+
+  box.innerHTML = `
+    <p class="cm-mes">Mês ${r.nome} (Atual) — ${r.diasUteis} dias úteis
+      ${r.feriadosNoMes.length ? `<span class="muted">(${r.feriadosNoMes.length} feriado(s) descontado(s))</span>` : ""}</p>
+    <div class="cm-box"><span class="k">Distância diária (ida + volta)</span><span class="v">${km(kmDia)} km</span></div>
+    <div class="cm-box"><span class="k">Custo médio por km</span><span class="v">${brl(m.custoPorKm)}</span></div>
+    <div class="cm-box"><span class="k">Custo médio por dia de trabalho</span><span class="v">${brl(custoDia)}</span></div>
+    <div class="cm-box destaque"><span class="k">Estimativa do mês (ir e voltar)</span><span class="v">${brl(custoMes)}</span></div>
+    <p class="cm-nota">${km(kmDia)} km/dia × ${brl(m.custoPorKm)}/km × ${r.diasUteis} dias úteis de ${r.nome}.
+      ${estimado ? " Distância viária estimada (Haversine ×1,38)." : ""}
+      Baseado no consumo médio real de ${km(m.consumoMedio)} km/L e preço médio de ${brl(m.precoMedioLitro)}/L.</p>`;
 }
 
 function renderGrafico(m) {

@@ -81,6 +81,17 @@ input,select{background:var(--bg);border:1px solid var(--line);color:var(--text)
 .metric-unit{color:var(--muted);font-size:.78rem}
 .custo-circuito{margin-top:12px;font-size:.9rem;color:var(--muted)}
 .custo-circuito b{color:var(--text)}
+.muted{color:var(--muted)}
+
+.custo-mensal{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:720px){.custo-mensal{grid-template-columns:1fr 1fr}}
+.cm-box{background:var(--bg);border-radius:10px;padding:12px}
+.cm-box .k{display:block;color:var(--muted);font-size:.76rem;margin-bottom:4px}
+.cm-box .v{font-size:1.35rem;font-weight:700}
+.cm-box.destaque{border:1px solid var(--primary)}
+.cm-box.destaque .v{color:var(--primary)}
+.custo-mensal .cm-nota{grid-column:1/-1;color:var(--muted);font-size:.82rem;line-height:1.5;margin:0}
+.cm-mes{grid-column:1/-1;font-weight:600;font-size:1rem}
 
 .paridade-form{display:grid;gap:10px}
 .paridade-form label{font-size:.8rem;color:var(--muted)}

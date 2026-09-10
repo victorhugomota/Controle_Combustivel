@@ -21,6 +21,7 @@ na *Documentação Técnica do Sistema de Gestão & Auditoria de Consumo de Comb
 - **Preço médio do litro:** `Σ valorTotal / Σ totalLitros`.
 - **Custo por km:** `preço médio do litro ÷ consumo médio`.
 - **Custo do circuito:** `km do circuito × custo por km`.
+- **Custo do trabalho no mês atual:** `km/dia (ida+volta) × custo por km × dias úteis do mês`. Os dias úteis descontam finais de semana e feriados nacionais (fixos + móveis via Páscoa de Meeus/Jones/Butcher) e o feriado municipal de Ribeirão Preto (19/06) — ver `js/feriados.js`. O card mostra `Mês X (Atual) — Y dias úteis`, distância diária, custo médio por km, custo médio por dia e a estimativa mensal para ir e voltar.
 - **Etanol × Gasolina:** razão `preço etanol / preço gasolina` comparada ao fator (padrão 0,70).
 - Gráfico Recharts/Chart.js com histórico de preço (barras) e consumo (linha).
 
