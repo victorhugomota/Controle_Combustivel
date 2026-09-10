@@ -9,7 +9,43 @@ async function buscar(texto, limit) {
   return resp.json();
 }
 
+/* ---------- Plus Codes (Open Location Code) ---------- */
+const OLC = () => window.OpenLocationCode;
+// aceita "Q5PV+6R", "9G8F+6X" ou código completo "6GCRQ5PV+6R"
+const RE_PLUSCODE = /\b([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{2,3})\b/i;
+
+export function extrairPlusCode(texto) {
+  const m = (texto || "").match(RE_PLUSCODE);
+  if (!m) return null;
+  const codigo = m[1].toUpperCase();
+  const resto = texto.replace(m[0], "").replace(/^[\s,;-]+|[\s,;-]+$/g, "").trim();
+  return { codigo, resto };
+}
+
+// Resolve um plus code (completo ou curto + localidade) para coordenadas.
+export async function resolverPlusCode(texto) {
+  const olc = OLC();
+  const info = extrairPlusCode(texto);
+  if (!olc || !info || !olc.isValid(info.codigo)) throw new Error("Plus code inválido");
+
+  let completo = info.codigo;
+  if (!olc.isFull(info.codigo)) {
+    if (!info.resto) throw new Error("Informe a cidade/bairro após o plus code");
+    const ref = await geocodificar(info.resto);
+    completo = olc.recoverNearest(info.codigo, ref.lat, ref.lng);
+  }
+  const area = olc.decode(completo);
+  return {
+    lat: area.latitudeCenter,
+    lng: area.longitudeCenter,
+    displayName: `${info.codigo}${info.resto ? " — " + info.resto : ""} (plus code)`
+  };
+}
+
 export async function geocodificar(endereco) {
+  if (window.OpenLocationCode && extrairPlusCode(endereco)) {
+    try { return await resolverPlusCode(endereco); } catch (e) { /* tenta Nominatim abaixo */ }
+  }
   const dados = await buscar(endereco, 1);
   if (!dados.length) throw new Error("Endereço não encontrado");
   return {
@@ -81,8 +117,15 @@ export function ativarAutocomplete(input, onSelect) {
       lista.hidden = false;
       lista.innerHTML = "<li class='ac-info'>Buscando…</li>";
       try {
-        render(await sugerirEnderecos(texto));
-      } catch { lista.innerHTML = "<li class='ac-info'>Erro na busca</li>"; }
+        if (extrairPlusCode(texto)) {
+          const r = await resolverPlusCode(texto);
+          render([r]);
+        } else {
+          render(await sugerirEnderecos(texto));
+        }
+      } catch (e) {
+        lista.innerHTML = `<li class='ac-info'>${e.message || "Erro na busca"}</li>`;
+      }
     }, 400);
   });
 

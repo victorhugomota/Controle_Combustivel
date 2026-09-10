@@ -9,7 +9,7 @@ na *Documentação Técnica do Sistema de Gestão & Auditoria de Consumo de Comb
 ## O que o sistema faz
 
 ### Circuito pendular (ida e volta separadas)
-1. Cadastre o **endereço de casa** (Configurações) e os **destinos de trabalho** (com geocodificação Nominatim/OSM).
+1. Cadastre o **endereço de casa** (Configurações) e os **destinos de trabalho**. Os campos de endereço têm **autocomplete** (Nominatim/OSM) e também aceitam **Plus Codes** do Google/Open Location Code — código completo (`6GCRQ5PV+6R`) ou código curto + localidade (`Q5PV+6R Jardim Canadá, Ribeirão Preto - SP`), resolvido offline pela lib `js/vendor/openlocationcode.js`.
 2. O algoritmo (`js/rotas.js`) ordena os destinos ativos pela **distância de casa** (Haversine), do mais próximo ao mais distante: `D1 … Dn`.
 3. **Ida:** `Casa → D1 → D2 → … → Dn`.
 4. **Volta:** `Dn → … → D2 → D1 → Casa` — assim o passageiro deixado no primeiro destino é recolhido no retorno.
