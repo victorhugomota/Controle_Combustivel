@@ -41,6 +41,17 @@ input,select{background:var(--bg);border:1px solid var(--line);color:var(--text)
   padding:9px 11px;border-radius:9px;font-size:.9rem;width:100%}
 .hint{flex-basis:100%;color:var(--muted);font-size:.8rem}
 
+.ac-wrap{position:relative;flex:1;min-width:160px}
+.ac-wrap input{width:100%}
+.ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:1200;
+  list-style:none;margin:0;padding:4px;background:var(--panel-2);
+  border:1px solid var(--line);border-radius:10px;max-height:240px;overflow:auto;
+  box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.ac-list li{padding:8px 10px;border-radius:7px;font-size:.85rem;cursor:pointer;line-height:1.3}
+.ac-list li:hover{background:var(--primary);color:#052e16}
+.ac-list li.ac-info{color:var(--muted);cursor:default}
+.ac-list li.ac-info:hover{background:none;color:var(--muted)}
+
 .legs-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:640px){.legs-wrap{grid-template-columns:1fr}}
 .leg-title{font-size:.9rem;padding-bottom:6px;border-bottom:2px solid}

@@ -2,7 +2,7 @@ import {
   db, iniciarAuth, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp, getDoc
 } from "./firebase.js";
-import { geocodificar } from "./geocode.js";
+import { geocodificar, ativarAutocomplete } from "./geocode.js";
 import { montarCircuito, calcularTrecho, googleMapsUrl } from "./rotas.js";
 import { calcularMetricas, analisarParidade } from "./metricas.js";
 
@@ -135,6 +135,14 @@ $("#vehiclePhoto").addEventListener("click", () => $("#cfgFoto").click());
 
 /* ---------- Rotas / destinos ---------- */
 const rotasCol = collection(db, "rotas");
+
+ativarAutocomplete($("#rotaEndereco"), (item) => {
+  $("#geoHint").textContent = `📍 ${item.lat.toFixed(5)}, ${item.lng.toFixed(5)}`;
+});
+ativarAutocomplete($("#cfgEndereco"), (item) => {
+  $("#cfgLat").value = item.lat.toFixed(7);
+  $("#cfgLng").value = item.lng.toFixed(7);
+});
 
 $("#btnGeocode").addEventListener("click", async () => {
   const hint = $("#geoHint");
