@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Controle de Combustível — Consumo Família Mota</title>
+  <meta name="description" content="Gestão de consumo de combustível e roteirização de circuito pendular (ida e volta separadas).">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <img id="vehiclePhoto" src="./assets/car-placeholder.svg" alt="Veículo" class="vehicle-avatar">
+      <div>
+        <h1 id="vehicleName" title="Clique para editar">Nissan Kicks de Victor e Maria</h1>
+        <p class="sub"><span id="syncDot" class="dot"></span> <span id="syncStatus">conectando…</span></p>
+      </div>
+    </div>
+    <nav class="cta">
+      <button data-modal="modalAbastecimento" class="btn btn-primary">+ Abastecimento</button>
+      <button data-modal="modalHistorico" class="btn">Histórico</button>
+      <button data-modal="modalConfig" class="btn">Configurações</button>
+    </nav>
+  </header>
+
+  <main class="grid">
+    <!-- Rotas / circuito -->
+    <section class="card span-2">
+      <div class="card-head">
+        <h2>Rotas de trabalho &amp; circuito pendular</h2>
+        <button id="btnRecalcular" class="btn btn-sm">Recalcular rota</button>
+      </div>
+
+      <form id="formRota" class="row-form" autocomplete="off">
+        <input type="text" id="rotaNome" placeholder="Nome do destino (ex: Trabalho Lagoinha)" required>
+        <input type="text" id="rotaEndereco" placeholder="Endereço completo" required>
+        <button type="button" id="btnGeocode" class="btn btn-sm">Localizar</button>
+        <button type="submit" class="btn btn-sm btn-primary">Adicionar</button>
+        <small id="geoHint" class="hint"></small>
+      </form>
+
+      <div class="legs-wrap">
+        <div>
+          <h3 class="leg-title leg-ida">Trajeto de Ida</h3>
+          <ol id="listaIda" class="legs"></ol>
+        </div>
+        <div>
+          <h3 class="leg-title leg-volta">Trajeto de Volta</h3>
+          <ol id="listaVolta" class="legs"></ol>
+        </div>
+      </div>
+
+      <div class="route-summary" id="routeSummary"></div>
+      <a id="gmapsLink" class="btn btn-sm" target="_blank" rel="noopener" hidden>Abrir circuito no Google Maps</a>
+
+      <h3 class="mt">Destinos cadastrados</h3>
+      <ul id="listaDestinos" class="destinos"></ul>
+    </section>
+
+    <!-- Mapa -->
+    <section class="card span-2">
+      <div class="card-head"><h2>Mapa do circuito</h2>
+        <span class="map-legend"><i class="sw ida"></i> Ida &nbsp; <i class="sw volta"></i> Volta</span>
+      </div>
+      <div id="map"></div>
+    </section>
+
+    <!-- Métricas -->
+    <section class="card">
+      <div class="card-head"><h2>Métricas de consumo</h2></div>
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label">Consumo médio</span>
+          <span class="metric-value" id="mConsumo">—</span>
+          <span class="metric-unit">km/L</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Custo por km</span>
+          <span class="metric-value" id="mCustoKm">—</span>
+          <span class="metric-unit">R$/km</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Preço médio do litro</span>
+          <span class="metric-value" id="mPrecoLitro">—</span>
+          <span class="metric-unit">R$/L</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Total gasto</span>
+          <span class="metric-value" id="mTotal">—</span>
+          <span class="metric-unit" id="mLitros">— L</span>
+        </div>
+      </div>
+      <div class="custo-circuito" id="custoCircuito"></div>
+    </section>
+
+    <!-- Paridade -->
+    <section class="card">
+      <div class="card-head"><h2>Etanol x Gasolina</h2></div>
+      <form id="formParidade" class="paridade-form">
+        <label>Preço Etanol (R$/L)
+          <input type="number" step="0.001" id="precoEtanol" placeholder="ex: 3,89">
+        </label>
+        <label>Preço Gasolina (R$/L)
+          <input type="number" step="0.001" id="precoGasolina" placeholder="ex: 5,79">
+        </label>
+        <label>Fator de rendimento
+          <input type="number" step="0.01" id="fatorParidade" value="0.70">
+        </label>
+      </form>
+      <div id="resultadoParidade" class="paridade-result"></div>
+    </section>
+
+    <!-- Gráfico -->
+    <section class="card span-2">
+      <div class="card-head"><h2>Histórico de preço e consumo</h2></div>
+      <canvas id="grafico" height="120"></canvas>
+    </section>
+  </main>
+
+  <!-- Modais -->
+  <div class="modal" id="modalAbastecimento" hidden>
+    <div class="modal-box">
+      <div class="modal-head"><h2>Registrar abastecimento</h2><button class="modal-close">&times;</button></div>
+      <form id="formAbastecimento">
+        <label>Data <input type="date" id="abData" required></label>
+        <label>Odômetro (km) <input type="number" step="1" id="abOdometro" required></label>
+        <label>Valor total (R$) <input type="number" step="0.01" id="abValor" required></label>
+        <label>Litros <input type="number" step="0.001" id="abLitros" required></label>
+        <label>Combustível
+          <select id="abTipo"><option>Gasolina</option><option>Etanol</option></select>
+        </label>
+        <p class="calc-hint">Preço/L: <strong id="abPrecoCalc">—</strong></p>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="modalHistorico" hidden>
+    <div class="modal-box wide">
+      <div class="modal-head"><h2>Histórico de abastecimentos</h2><button class="modal-close">&times;</button></div>
+      <table class="tbl">
+        <thead><tr><th>Data</th><th>Odômetro</th><th>Litros</th><th>R$ total</th><th>R$/L</th><th>Tipo</th><th>km/L</th><th></th></tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal" id="modalConfig" hidden>
+    <div class="modal-box">
+      <div class="modal-head"><h2>Configurações</h2><button class="modal-close">&times;</button></div>
+      <form id="formConfig">
+        <label>Nome do veículo <input type="text" id="cfgNome"></label>
+        <label>Endereço de casa <input type="text" id="cfgEndereco"></label>
+        <div class="two">
+          <label>Latitude <input type="number" step="0.0000001" id="cfgLat"></label>
+          <label>Longitude <input type="number" step="0.0000001" id="cfgLng"></label>
+        </div>
+        <button type="button" id="btnGeocodeCasa" class="btn btn-sm">Localizar endereço</button>
+        <label>Foto do veículo <input type="file" id="cfgFoto" accept="image/*"></label>
+        <button type="submit" class="btn btn-primary">Salvar configurações</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

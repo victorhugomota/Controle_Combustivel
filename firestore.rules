@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // App de uso pessoal com autenticação anônima.
+    // Habilite "Anonymous" em Authentication > Sign-in method no console do Firebase.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Alternativa SEM autenticação (menos seguro, use apenas para testes rápidos):
+    // match /{document=**} { allow read, write: if true; }
+  }
+}
